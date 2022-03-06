@@ -1,10 +1,15 @@
 package;
 
+import flixel.addons.effects.FlxSkewedSprite;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.math.FlxMath;
 import flixel.util.FlxColor;
+#if polymod
+import polymod.format.ParseRules.TargetSignatureElement;
+#end
+import PlayState;
 
 using StringTools;
 
@@ -17,9 +22,8 @@ class Note extends FlxSprite
 	public var canBeHit:Bool = false;
 	public var tooLate:Bool = false;
 	public var wasGoodHit:Bool = false;
-	public var altNote:Bool = false;
 	public var prevNote:Note;
-
+	public var modifiedByLua:Bool = false;
 	public var sustainLength:Float = 0;
 	public var isSustainNote:Bool = false;
 
@@ -31,14 +35,12 @@ class Note extends FlxSprite
 	public static var BLUE_NOTE:Int = 1;
 	public static var RED_NOTE:Int = 3;
 
-	public static var canMissLeft:Bool = true;
-	public static var canMissRight:Bool = true;
-	public static var canMissUp:Bool = true;
-	public static var canMissDown:Bool = true;
-
+	public static var isDownScroll:Bool;
+	public var rating:String = "shit";
 	public function new(strumTime:Float, noteData:Int, ?prevNote:Note, ?sustainNote:Bool = false)
 	{
 		super();
+		alpha = 0.7;
 
 		if (prevNote == null)
 			prevNote = this;
@@ -49,12 +51,10 @@ class Note extends FlxSprite
 		x += 50;
 		// MAKE SURE ITS DEFINITELY OFF SCREEN?
 		y -= 2000;
-		this.strumTime = strumTime; // add offset here??
+		this.strumTime = strumTime;
 
-		/*
-			if (this.strumTime < 0)
-				this.strumTime = 0;
-		 */
+		if (this.strumTime < 0)
+		    this.strumTime = 0;
 
 		this.noteData = noteData;
 
@@ -129,8 +129,8 @@ class Note extends FlxSprite
 
 		// trace(prevNote);
 
-		if (FlxG.save.data.downscroll && sustainNote)
-			flipY = true;
+		// if (isDownScroll || sustainNote)
+		//     flipY = true;//idk
 
 		if (isSustainNote && prevNote != null)
 		{
@@ -138,6 +138,9 @@ class Note extends FlxSprite
 			alpha = 0.6;
 
 			x += width / 2;
+
+			if (isDownScroll)
+				angle = 180;
 
 			switch (noteData)
 			{
@@ -172,8 +175,7 @@ class Note extends FlxSprite
 						prevNote.animation.play('redhold');
 				}
 
-				// prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.5 * PlayState.SONG.speed;
-				prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.8 * PlayState.SONG.speed;
+				prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.5 * PlayState.SONG.speed;
 				prevNote.updateHitbox();
 				// prevNote.setGraphicSize();
 			}
@@ -184,35 +186,10 @@ class Note extends FlxSprite
 	{
 		super.update(elapsed);
 
-		// TODO: make a system for sustain notes -- kinda done
-		/*
-			if (mustPress)
-			{
-				if (isSustainNote)
-				{
-					canBeHit = (strumTime < Conductor.songPosition + Conductor.safeZoneOffset * 0.25);
-				}
-				else
-				{
-					canBeHit = (strumTime > Conductor.songPosition - Conductor.safeZoneOffset
-						&& strumTime < Conductor.songPosition + Conductor.safeZoneOffset);
-				}
-
-				if (strumTime < Conductor.songPosition - Conductor.safeZoneOffset)
-					tooLate = true;
-			}
-			else
-			{
-				canBeHit = false;
-
-				if (strumTime <= Conductor.songPosition)
-					wasGoodHit = true;
-			}
-		 */
-
 		if (mustPress)
 		{
-			if (strumTime > Conductor.songPosition - Conductor.safeZoneOffset
+			// The * 0.5 is so that it's easier to hit them too late, instead of too early
+			if (strumTime > Conductor.songPosition - (Conductor.safeZoneOffset * 1.5)
 				&& strumTime < Conductor.songPosition + (Conductor.safeZoneOffset * 0.5))
 				canBeHit = true;
 			else
@@ -234,17 +211,5 @@ class Note extends FlxSprite
 			if (alpha > 0.3)
 				alpha = 0.3;
 		}
-
-		/*
-			? = &&
-			, = new if / else
-			: = else (maybe)
-			!0 = true
-			!1 = false
-			&& = {}
-
-			this.mustPress ? this.willMiss && !this.wasGoodHit ? (this.tooLate = !0,
-					this.canBeHit = !1) : this.strumTime > Z.songPosition - Z.safeZoneOffset ? this.strumTime < Z.songPosition + .5 * Z.safeZoneOffset && (this.canBeHit = !0) : this.willMiss = this.canBeHit = !0
-		 */
 	}
 }

@@ -12,12 +12,14 @@ import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import flixel.FlxCamera;
 
 class PauseSubState extends MusicBeatSubstate
 {
 	var grpMenuShit:FlxTypedGroup<Alphabet>;
+	var blueballs:Int = MusicBeatSubstate.deaths;
 
-	var menuItems:Array<String> = ['Resume', 'Restart Song', 'Exit to menu'];
+	var menuItems:Array<String> = ['Resume', 'Restart Song', 'Chart Editor', 'Exit to menu'];
 	var curSelected:Int = 0;
 
 	var pauseMusic:FlxSound;
@@ -38,28 +40,38 @@ class PauseSubState extends MusicBeatSubstate
 		add(bg);
 
 		var levelInfo:FlxText = new FlxText(20, 15, 0, "", 32);
-		levelInfo.text += PlayState.SONG.song;
+		levelInfo.text = "SONG: " + PlayState.SONG.song + "";
 		levelInfo.scrollFactor.set();
 		levelInfo.setFormat(Paths.font("vcr.ttf"), 32);
 		levelInfo.updateHitbox();
 		add(levelInfo);
 
 		var levelDifficulty:FlxText = new FlxText(20, 15 + 32, 0, "", 32);
-		levelDifficulty.text += CoolUtil.difficultyString();
+		levelDifficulty.text = "MODE: " + CoolUtil.difficultyString() + "";
 		levelDifficulty.scrollFactor.set();
 		levelDifficulty.setFormat(Paths.font('vcr.ttf'), 32);
 		levelDifficulty.updateHitbox();
 		add(levelDifficulty);
 
+		var levelDeaths:FlxText = new FlxText(20, 47 + 32, 0, "", 32);
+		levelDeaths.text = "BLUEBALLED (DEATHS): " + blueballs + "";
+		levelDeaths.scrollFactor.set();
+		levelDeaths.setFormat(Paths.font('vcr.ttf'), 32);
+		levelDeaths.updateHitbox();
+		add(levelDeaths);
+
 		levelDifficulty.alpha = 0;
 		levelInfo.alpha = 0;
+		levelDeaths.alpha = 0;
 
 		levelInfo.x = FlxG.width - (levelInfo.width + 20);
 		levelDifficulty.x = FlxG.width - (levelDifficulty.width + 20);
+		levelDeaths.x = FlxG.width - (levelDeaths.width + 20);
 
 		FlxTween.tween(bg, {alpha: 0.6}, 0.4, {ease: FlxEase.quartInOut});
 		FlxTween.tween(levelInfo, {alpha: 1, y: 20}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.3});
 		FlxTween.tween(levelDifficulty, {alpha: 1, y: levelDifficulty.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.5});
+		FlxTween.tween(levelDeaths, {alpha: 1, y: levelDeaths.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.7});
 
 		grpMenuShit = new FlxTypedGroup<Alphabet>();
 		add(grpMenuShit);
@@ -75,6 +87,15 @@ class PauseSubState extends MusicBeatSubstate
 		changeSelection();
 
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
+
+		#if mobileC
+		addVirtualPad(UP_DOWN, A_B);
+		
+		var camcontrol = new FlxCamera();
+		FlxG.cameras.add(camcontrol);
+		camcontrol.bgColor.alpha = 0;
+		_virtualpad.cameras = [camcontrol];
+		#end
 	}
 
 	override function update(elapsed:Float)
@@ -108,7 +129,10 @@ class PauseSubState extends MusicBeatSubstate
 				case "Restart Song":
 					FlxG.resetState();
 				case "Exit to menu":
+				    MusicBeatSubstate.deaths = 0;
 					FlxG.switchState(new MainMenuState());
+				case "Chart Editor":
+				    FlxG.switchState(new ChartingState());
 			}
 		}
 

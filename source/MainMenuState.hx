@@ -1,5 +1,6 @@
 package;
 
+import openfl.Assets;
 #if desktop
 import Discord.DiscordClient;
 #end
@@ -14,8 +15,11 @@ import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+#if newgrounds
 import io.newgrounds.NG;
+#end
 import lime.app.Application;
+import utils.AndroidData;
 
 using StringTools;
 
@@ -26,13 +30,16 @@ class MainMenuState extends MusicBeatState
 	var menuItems:FlxTypedGroup<FlxSprite>;
 
 	#if !switch
-	var optionShit:Array<String> = ['story mode', 'freeplay', 'options',];
+	var optionShit:Array<String> = ['story mode', 'freeplay', 'options', 'kickstarter'];
 	#else
 	var optionShit:Array<String> = ['story mode', 'freeplay'];
 	#end
 
 	var magenta:FlxSprite;
 	var camFollow:FlxObject;
+	public var bg:FlxSprite;
+	public var menuItem:FlxSprite;
+	var data:AndroidData = new AndroidData();
 
 	override function create()
 	{
@@ -40,6 +47,7 @@ class MainMenuState extends MusicBeatState
 		// Updating Discord Rich Presence
 		DiscordClient.changePresence("In the Menus", null);
 		#end
+		var dfjkShit:Bool = data.getDfjk();
 
 		transIn = FlxTransitionableState.defaultTransIn;
 		transOut = FlxTransitionableState.defaultTransOut;
@@ -51,10 +59,10 @@ class MainMenuState extends MusicBeatState
 
 		persistentUpdate = persistentDraw = true;
 
-		var bg:FlxSprite = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
+		bg = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
 		bg.scrollFactor.x = 0;
 		bg.scrollFactor.y = 0.18;
-		bg.setGraphicSize(Std.int(bg.width * 1.1));
+		bg.setGraphicSize(Std.int(bg.width * 1.15));
 		bg.updateHitbox();
 		bg.screenCenter();
 		bg.antialiasing = true;
@@ -66,7 +74,7 @@ class MainMenuState extends MusicBeatState
 		magenta = new FlxSprite(-80).loadGraphic(Paths.image('menuDesat'));
 		magenta.scrollFactor.x = 0;
 		magenta.scrollFactor.y = 0.18;
-		magenta.setGraphicSize(Std.int(magenta.width * 1.1));
+		magenta.setGraphicSize(Std.int(magenta.width * 1.15));
 		magenta.updateHitbox();
 		magenta.screenCenter();
 		magenta.visible = false;
@@ -82,10 +90,15 @@ class MainMenuState extends MusicBeatState
 
 		for (i in 0...optionShit.length)
 		{
-			var menuItem:FlxSprite = new FlxSprite(0, 60 + (i * 160));
+			menuItem = new FlxSprite(0, 60 + (i * 160));
 			menuItem.frames = tex;
-			menuItem.animation.addByPrefix('idle', optionShit[i] + " basic", 24);
-			menuItem.animation.addByPrefix('selected', optionShit[i] + " white", 24);
+			if (optionShit[i] == "kickstarter")
+			{
+				menuItem.setGraphicSize(Std.int(menuItem.width * 0.775));
+				menuItem.updateHitbox();
+			}
+			menuItem.animation.addByPrefix('idle', optionShit[i] + " idle", 24);
+			menuItem.animation.addByPrefix('selected', optionShit[i] + " selected", 24);
 			menuItem.animation.play('idle');
 			menuItem.ID = i;
 			menuItem.screenCenter(X);
@@ -96,7 +109,7 @@ class MainMenuState extends MusicBeatState
 
 		FlxG.camera.follow(camFollow, null, 0.06);
 
-		var versionShit:FlxText = new FlxText(5, FlxG.height - 18, 0, "v" + Application.current.meta.get('version'), 12);
+		var versionShit:FlxText = new FlxText(5, FlxG.height - 18, 0, "v" + Application.current.meta.get('version') + " " + Assets.getText("assets/android/aboutmod.txt"), 12);
 		versionShit.scrollFactor.set();
 		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(versionShit);
@@ -105,10 +118,25 @@ class MainMenuState extends MusicBeatState
 
 		changeItem();
 
+		#if mobileC
+		addVirtualPad(UP_DOWN, A_B);
+		#end
+		
+		/*
+		if (dfjkShit){
+		    Controls.setKeyboardScheme(Duo, true);
+		}
+		else{
+		    Controls.setKeyboardScheme(Solo, true);
+		}
+			FIX THIS!!!!!!!!!!!
+		*/
 		super.create();
+		//data.startData();
 	}
 
 	var selectedSomethin:Bool = false;
+	
 
 	override function update(elapsed:Float)
 	{
@@ -138,11 +166,9 @@ class MainMenuState extends MusicBeatState
 
 			if (controls.ACCEPT)
 			{
-				if (optionShit[curSelected] == 'donate')
+				if (optionShit[curSelected] == 'kickstarter')
 				{
 					#if linux
-					//imagine being on linux
-					//i made all of this on linux
 					Sys.command('/usr/bin/xdg-open', ["https://ninja-muffin24.itch.io/funkin", "&"]);
 					#else
 					FlxG.openURL('https://ninja-muffin24.itch.io/funkin');
@@ -184,8 +210,8 @@ class MainMenuState extends MusicBeatState
 										trace("Freeplay Menu Selected");
 
 									case 'options':
-										FlxTransitionableState.skipNextTransIn = true;
-										FlxTransitionableState.skipNextTransOut = true;
+										/*FlxTransitionableState.skipNextTransIn = true;
+										FlxTransitionableState.skipNextTransOut = true;*/
 										FlxG.switchState(new OptionsMenu());
 								}
 							});
@@ -196,6 +222,9 @@ class MainMenuState extends MusicBeatState
 		}
 
 		super.update(elapsed);
+		menuItem.setGraphicSize(Std.int(menuItem.width * 1));
+		menuItem.updateHitbox();
+		data.flushData();
 
 		menuItems.forEach(function(spr:FlxSprite)
 		{
@@ -224,5 +253,12 @@ class MainMenuState extends MusicBeatState
 
 			spr.updateHitbox();
 		});
+	}
+
+	override function beatHit()
+	{
+		super.beatHit();
+		menuItem.setGraphicSize(Std.int(menuItem.width * 1.3));
+		menuItem.updateHitbox();
 	}
 }

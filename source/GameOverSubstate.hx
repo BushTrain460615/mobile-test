@@ -1,5 +1,6 @@
 package;
 
+import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSubState;
@@ -26,12 +27,11 @@ class GameOverSubstate extends MusicBeatSubstate
 			case 'schoolEvil':
 				stageSuffix = '-pixel';
 				daBf = 'bf-pixel-dead';
+			case 'tankStage2':
+			    daBf = 'bf-holding-gf-dead';
 			default:
 				daBf = 'bf';
 		}
-
-		if (PlayState.SONG.song.toLowerCase() == 'stress')
-			daBf = 'bf-holding-gf-dead';
 
 		super();
 
@@ -53,14 +53,19 @@ class GameOverSubstate extends MusicBeatSubstate
 
 		bf.playAnim('firstDeath');
 
-		FlxG.sound.cache(Paths.music('gameOver' + stageSuffix));
-		FlxG.sound.cache(Paths.music('gameOverEnd' + stageSuffix));
+		#if mobileC
+		addVirtualPad(NONE, A_B);
+		var camcontrol = new FlxCamera();
+		FlxG.cameras.add(camcontrol);
+		camcontrol.bgColor.alpha = 0;
+		_virtualpad.cameras = [camcontrol];
+		#end
 	}
 
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
-
+		var daStage = PlayState.curStage;
 		if (controls.ACCEPT)
 		{
 			endBullshit();
@@ -69,9 +74,7 @@ class GameOverSubstate extends MusicBeatSubstate
 		if (controls.BACK)
 		{
 			FlxG.sound.music.stop();
-
-			remove(camFollow);
-			remove(bf);
+			MusicBeatSubstate.deaths = 0;
 
 			if (PlayState.isStoryMode)
 				FlxG.switchState(new StoryMenuState());
@@ -81,12 +84,16 @@ class GameOverSubstate extends MusicBeatSubstate
 
 		if (bf.animation.curAnim.name == 'firstDeath' && bf.animation.curAnim.curFrame == 12)
 		{
-			FlxG.camera.follow(camFollow, LOCKON, 0.01);
+			FlxG.camera.follow(camFollow, LOCKON, MusicBeatState.camMove);
 		}
 
 		if (bf.animation.curAnim.name == 'firstDeath' && bf.animation.curAnim.finished)
 		{
 			FlxG.sound.playMusic(Paths.music('gameOver' + stageSuffix));
+			if (daStage == 'tankStage' || daStage == 'tankStage2')
+			{
+			    FlxG.sound.play(Paths.sound('jeffGameover-' + FlxG.random.int(1, 25), 'shared'));
+			}
 		}
 
 		if (FlxG.sound.music.playing)
@@ -110,15 +117,12 @@ class GameOverSubstate extends MusicBeatSubstate
 		{
 			isEnding = true;
 			bf.playAnim('deathConfirm', true);
-			FlxG.sound.music.fadeOut(0.1);
+			FlxG.sound.music.stop();
 			FlxG.sound.play(Paths.music('gameOverEnd' + stageSuffix));
 			new FlxTimer().start(0.7, function(tmr:FlxTimer)
 			{
 				FlxG.camera.fade(FlxColor.BLACK, 2, false, function()
 				{
-					remove(camFollow);
-					remove(bf);
-
 					LoadingState.loadAndSwitchState(new PlayState());
 				});
 			});

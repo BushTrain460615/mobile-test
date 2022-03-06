@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
-
-	<app title="Ninja Engine" file="Ninja Engine" packageName="com.urmom.ninja" package="com.urmom.ninja" main="Main" version="0.0.1" company="Ninja Engine" />
+        <!-- i got this from the FNF Android port by luckydog6 -->
+	<app title="Ninja Engine Android" file="Ninja Engine Android" packageName="com.urmom.ninja" package="com.urmom.ninja" main="Main" version="0.0.1" company="Ninja Engine Android Port" />
 
 	<!--Switch Export with Unique ApplicationID and Icon-->
 	<set name="APP_ID" value="0x0100f6c013bbc000" />
@@ -95,9 +95,6 @@
 	<assets path="assets/week7"    library="week7"    exclude="*.mp3" unless="web"/>
 	<assets path="assets/videos" exclude="*.mp3" if="web"/>
         <assets path="assets/videos" exclude="*.ogg" unless="web"/>
-
-        <assets path="plugins/" rename='' if="windows"/>
-        <assets path="dlls/" rename='' if="windows"/>
 	
 	<assets path='example_mods' rename='mods' embed='false'/>
 	<assets path='art/readme.txt' rename='do NOT readme.txt' />
